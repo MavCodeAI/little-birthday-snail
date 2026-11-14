@@ -228,6 +228,20 @@ def polyfill(pts, color, a=1.0):
                     _blend(y * W * 3 + x * 3, r, g, b, min(1.0, w) * a)
 
 
+def _rowspan(y, xa, xb, color, a=1.0):
+    """One horizontal span, soft at both ends."""
+    if y < 0 or y >= H:
+        return
+    r, g, b = color
+    ia = max(0, int(xa))
+    ib = min(W - 1, int(xb))
+    base = int(y) * W * 3
+    for x in range(ia, ib + 1):
+        w = min(xb, x + 1) - max(xa, x)
+        if w > 0:
+            _blend(base + x * 3, r, g, b, min(1.0, w) * a)
+
+
 def rounded_rect(x0, y0, x1, y1, rad, color, a=1.0):
     pts = []
     for cx, cy, start in ((x1 - rad, y0 + rad, -math.pi / 2), (x1 - rad, y1 - rad, 0.0),
@@ -614,8 +628,8 @@ def cake():
     cream = (0xFF, 0xF1, 0xD9)
     icing = (0xF7, 0x99, 0xAE)
     icing_deep = (0xDD, 0x71, 0x8A)
-    sponge_top = (0xFA, 0xE2, 0xBA)
-    sponge_bot = (0xE2, 0xB4, 0x7C)
+    sponge_top = (0xF7, 0xDA, 0xA8)
+    sponge_bot = (0xD9, 0xA4, 0x68)
     bx = int(SHELL_C[0])
     base = int(SHELL_C[1] - SHELL_R + 8)
 
@@ -677,15 +691,35 @@ def cake():
         y = top - 38 + i * 12
         capsule(bx - 5, y, bx + 5, y - 6, 3.0, icing_deep, 0.9)
 
-    # flame
+    # flame: a crisp teardrop, leaning into the night
     fx, fy = bx, top - 52
-    polyfill([(fx, fy - 28), (fx + 10, fy - 2), (fx + 6, fy + 10), (fx - 6, fy + 10), (fx - 10, fy - 2)],
-             (0xFF, 0xB2, 0x46), 1.0)
-    disc(fx, fy + 4, 8.0, (0xFF, 0xB2, 0x46), 1.0)
-    polyfill([(fx, fy - 12), (fx + 4.5, fy + 1), (fx + 2.5, fy + 8), (fx - 2.5, fy + 8), (fx - 4.5, fy + 1)],
-             (0xFF, 0xF6, 0xC2), 1.0)
-    glow(fx, fy + 4, 250, (255, 172, 90), 0.26)
-    glow(fx, fy + 4, 96, (255, 226, 160), 0.24)
+    capsule(fx, fy + 8, fx, fy + 16, 1.5, (0x4A, 0x3A, 0x2C), 0.85)
+
+    def flame_points(height, half_w, lean_w, base_y):
+        right = []
+        left = []
+        for i in range(21):
+            t = i / 20.0
+            half = half_w * math.sin(math.pi * (0.08 + 0.92 * t)) ** 0.65
+            lean = lean_w * math.sin(math.pi * t)
+            yy = base_y - height * (1.0 - t)
+            right.append((fx + lean + half, yy))
+            left.append((fx + lean - half, yy))
+        return left[::-1] + right
+
+    polyfill(flame_points(40, 9.5, -3.5, fy + 10), (0xFF, 0x8A, 0x2E), 1.0)
+    polyfill(flame_points(30, 7.5, -3.0, fy + 8), (0xFF, 0xC0, 0x4A), 0.95)
+    polyfill(flame_points(17, 4.2, -2.0, fy + 6), (0xFF, 0xF6, 0xC8), 1.0)
+    glow(fx, fy + 2, 230, (255, 160, 80), 0.11)
+    glow(fx, fy + 2, 80, (255, 214, 140), 0.10)
+
+    # a few sparkles where the flame meets the dark
+    for sx, sy, sr in ((fx - 46, fy - 34, 7), (fx + 52, fy - 22, 6), (fx + 24, fy - 58, 5),
+                       (fx - 30, fy - 62, 5), (fx + 76, fy + 6, 4), (fx - 74, fy + 2, 4)):
+        polyfill([(sx, sy - sr), (sx + sr * 0.28, sy - sr * 0.28), (sx + sr, sy),
+                  (sx + sr * 0.28, sy + sr * 0.28), (sx, sy + sr),
+                  (sx - sr * 0.28, sy + sr * 0.28), (sx - sr, sy),
+                  (sx - sr * 0.28, sy - sr * 0.28)], (0xFF, 0xEE, 0xC0), 0.85)
 
 
 
