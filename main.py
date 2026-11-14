@@ -505,6 +505,31 @@ def snail_body():
             r, g, b = body_shade(px, py)
             _blend((int(py - 0.5)) * W * 3 + (int(px - 0.5)) * 3, r, g, b, c / 255.0)
 
+    # form: shade toward the silhouette so the tube reads as round
+    for xx in range(bw):
+        top = None
+        bottom = None
+        for yy in range(y1 - y0):
+            if cov[yy * bw + xx] > 120:
+                if top is None:
+                    top = yy
+                bottom = yy
+        if top is None:
+            continue
+        px = xx + x0
+        for d in range(34):
+            yy = bottom - d
+            if yy <= top:
+                break
+            a = 0.42 * (1.0 - d / 34.0) ** 1.5
+            _blend((yy + y0) * W * 3 + px * 3, 0x8A, 0x5C, 0x36, a)
+        for d in range(12):
+            yy = top + d
+            if yy >= bottom:
+                break
+            a = 0.30 * (1.0 - d / 12.0) ** 1.3
+            _blend((yy + y0) * W * 3 + px * 3, 0xFF, 0xF6, 0xE2, a)
+
     # eyes
     for ex, ey in ((672, 486), (754, 496)):
         disc(ex, ey, 23, (0xFF, 0xFF, 0xFF), 1.0)
@@ -518,13 +543,13 @@ def snail_body():
     disc(644, 662, 18, (0xF2, 0x8C, 0x8C), 0.10)
     disc(788, 664, 28, (0xF2, 0x8C, 0x8C), 0.10)
 
-    # smile
+    # smile, a little deeper so it reads at small sizes
     pts = []
     for i in range(17):
-        ang = math.pi * (0.18 + 0.62 * (i / 16.0))
-        pts.append((710 + 34 * math.cos(ang), 676 + 21 * math.sin(ang)))
+        ang = math.pi * (0.14 + 0.70 * (i / 16.0))
+        pts.append((710 + 37 * math.cos(ang), 674 + 24 * math.sin(ang)))
     for i in range(len(pts) - 1):
-        capsule(pts[i][0], pts[i][1], pts[i + 1][0], pts[i + 1][1], 3.4, BODY_DARK, 0.9)
+        capsule(pts[i][0], pts[i][1], pts[i + 1][0], pts[i + 1][1], 4.2, (0x8D, 0x5B, 0x38), 0.95)
 
 
 
@@ -574,12 +599,14 @@ def shell():
 
     disc(cx, cy, 7.0, (0xF9, 0xD2, 0x9E), 0.9)
 
-    # a thin warm rim where the candle light catches the shell
-    for i in range(44):
-        t = i / 43.0
-        ang = math.pi * (-0.78 + 0.98 * t)
-        disc(cx + (SHELL_R - 4) * math.cos(ang), cy + (SHELL_R - 4) * math.sin(ang),
-             3.6 - 1.8 * t, (0xFF, 0xEC, 0xC8), 0.16)
+    # warm light caught on the crown of the shell, where the flame reaches it
+    for i in range(52):
+        t = i / 51.0
+        ang = math.pi * (-0.95 + 0.95 * t)
+        px = cx + (SHELL_R - 6) * math.cos(ang)
+        py = cy + (SHELL_R - 6) * math.sin(ang)
+        disc(px, py, 5.0 - 2.2 * t, (0xFF, 0xC9, 0x8A), 0.10)
+        disc(px, py, 2.4 - 1.1 * t, (0xFF, 0xF0, 0xD2), 0.22)
 
 
 
@@ -597,40 +624,40 @@ def cake():
         disc(bx, base + 20 + i, 96 - i * 5, (0x7A, 0x3F, 0x2C), 0.05)
 
     # plate
-    rounded_rect(bx - 78, base - 2, bx + 78, base + 10, 6, cream, 0.95)
-    rounded_rect(bx - 70, base + 6, bx + 70, base + 15, 5, (0xE3, 0xC0, 0x95), 0.85)
+    rounded_rect(bx - 72, base - 2, bx + 72, base + 10, 6, cream, 0.95)
+    rounded_rect(bx - 64, base + 6, bx + 64, base + 15, 5, (0xE3, 0xC0, 0x95), 0.85)
 
     # bottom tier
-    tier1_top, tier1_bot = base - 66, base - 2
+    tier1_top, tier1_bot = base - 74, base - 2
     for y in range(tier1_top, tier1_bot):
         t = (y - tier1_top) / float(tier1_bot - tier1_top)
         r = int(sponge_top[0] + (sponge_bot[0] - sponge_top[0]) * t)
         g = int(sponge_top[1] + (sponge_bot[1] - sponge_top[1]) * t)
         b = int(sponge_top[2] + (sponge_bot[2] - sponge_top[2]) * t)
-        for x in range(bx - 64, bx + 65):
+        for x in range(bx - 72, bx + 73):
             _blend(y * W * 3 + x * 3, r, g, b, 1.0)
-    rounded_rect(bx - 66, tier1_top, bx + 66, tier1_bot, 8, sponge_top, 1.0)
+    rounded_rect(bx - 74, tier1_top, bx + 74, tier1_bot, 8, sponge_top, 1.0)
 
     # icing cap and drips on the bottom tier
-    rounded_rect(bx - 68, tier1_top - 8, bx + 68, tier1_top + 14, 9, icing, 1.0)
-    for dx, length in ((-52, 16), (-30, 26), (-6, 20), (18, 28), (42, 18), (58, 12)):
+    rounded_rect(bx - 76, tier1_top - 8, bx + 76, tier1_top + 14, 9, icing, 1.0)
+    for dx, length in ((-58, 16), (-34, 26), (-7, 20), (20, 28), (46, 18), (64, 12)):
         capsule(bx + dx, tier1_top + 8, bx + dx, tier1_top + 8 + length, 9.5, icing, 1.0)
         disc(bx + dx, tier1_top + 8 + length, 9.5, icing, 1.0)
 
     # contact shadow under the bottom tier
-    rounded_rect(bx - 64, tier1_bot - 4, bx + 64, tier1_bot + 3, 4, (0xBF, 0x8F, 0x5F), 0.5)
+    rounded_rect(bx - 72, tier1_bot - 4, bx + 72, tier1_bot + 3, 4, (0xBF, 0x8F, 0x5F), 0.5)
 
     # top tier
-    tier2_top, tier2_bot = base - 126, base - 64
-    rounded_rect(bx - 42, tier2_top, bx + 42, tier2_bot, 8, cream, 1.0)
-    for y in range(tier2_top + 30, tier2_bot):
-        for x in range(bx - 42, bx + 43):
+    tier2_top, tier2_bot = base - 142, base - 70
+    rounded_rect(bx - 50, tier2_top, bx + 50, tier2_bot, 8, cream, 1.0)
+    for y in range(tier2_top + 36, tier2_bot):
+        for x in range(bx - 50, bx + 51):
             _blend(y * W * 3 + x * 3, 0xF3, 0xDF, 0xC4, 0.35)
-    rounded_rect(bx - 44, tier2_top - 8, bx + 44, tier2_top + 12, 8, icing, 1.0)
-    for dx, length in ((-30, 18), (-8, 24), (14, 20), (32, 14)):
+    rounded_rect(bx - 52, tier2_top - 8, bx + 52, tier2_top + 12, 8, icing, 1.0)
+    for dx, length in ((-36, 18), (-9, 24), (16, 20), (38, 14)):
         capsule(bx + dx, tier2_top + 6, bx + dx, tier2_top + 6 + length, 8.5, icing, 1.0)
         disc(bx + dx, tier2_top + 6 + length, 8.5, icing, 1.0)
-    rounded_rect(bx - 44, tier2_top + 8, bx + 44, tier2_top + 13, 3, icing_deep, 0.45)
+    rounded_rect(bx - 52, tier2_top + 8, bx + 52, tier2_top + 13, 3, icing_deep, 0.45)
 
     # sprinkles sitting on the icing
     for i in range(20):
@@ -641,7 +668,7 @@ def cake():
         disc(sx, sy, rrange(1.4, 2.2), (0xFF, 0xE2, 0x8A) if i % 2 else (0xF4, 0x8F, 0xB1), 0.85)
 
     # contact shadow of the top tier
-    rounded_rect(bx - 40, tier2_bot - 4, bx + 40, tier2_bot + 3, 4, (0xCB, 0x9A, 0x6C), 0.45)
+    rounded_rect(bx - 48, tier2_bot - 4, bx + 48, tier2_bot + 3, 4, (0xCB, 0x9A, 0x6C), 0.45)
 
     # candle
     top = tier2_top - 8
@@ -672,9 +699,9 @@ def confetti():
     cols = [(0xFF, 0xD1, 0x66), (0xF4, 0x8F, 0xB1), (0x8E, 0xD1, 0xC8), (0xA8, 0xB4, 0xF0)]
     bx = SHELL_C[0]
     by = SHELL_C[1] - SHELL_R - 90
-    for i in range(26):
+    for i in range(44):
         ang = rrange(-math.pi * 0.98, -math.pi * 0.02)
-        dist = rrange(90, 210)
+        dist = rrange(60, 200)
         x = bx + math.cos(ang) * dist * 1.45
         y = by + math.sin(ang) * dist * 0.75 + rrange(-30, 60)
         if x < 70 or x > W - 70 or y < 40:
