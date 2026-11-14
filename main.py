@@ -622,6 +622,13 @@ def shell():
         disc(px, py, 5.0 - 2.2 * t, (0xFF, 0xC9, 0x8A), 0.10)
         disc(px, py, 2.4 - 1.1 * t, (0xFF, 0xF0, 0xD2), 0.22)
 
+    # where the shell meets the body, let it sit down into a soft contact shadow
+    for i in range(30):
+        t = i / 29.0
+        ang = math.pi * (0.10 + 0.80 * t)
+        disc(cx + (SHELL_R - 10) * math.cos(ang), cy + (SHELL_R - 10) * math.sin(ang),
+             11.0, (0x7C, 0x40, 0x2C), 0.10)
+
 
 
 def cake():
